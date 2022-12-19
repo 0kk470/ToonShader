@@ -13,15 +13,22 @@
 		_RimColor("Rim Color", Color) = (1,1,1,1)
 		_RimAmount("Rim Amount", Range(0, 1)) = 0.716
 		_RimThreshold("Rim Threshold", Range(0, 1)) = 0.1
+
+		_Outline("Outline Thickness", Range(0, 1)) = 0.1
+		_OutlineColor("Outline Color", Color) = (0, 0, 0, 1)
 	}
 	SubShader
 	{
 		Pass
 		{
+			Name "MainPass"
+
+			Cull Back
+
 			Tags
 			{
 				"LightMode" = "ForwardBase"
-				"PassFlags" = "OnlyDirectional"
+				//"PassFlags" = "OnlyDirectional"
 			}
 
 			CGPROGRAM
@@ -100,6 +107,57 @@
 				return _Color * sample * (_AmbientColor + light + specular + rim);
 			}
 			ENDCG
+		}
+
+		// Pass
+		// {
+		// 	Name "Other Lights"
+		// }
+
+		Pass
+		{
+			//另一个pass剔除掉前面 用来渲染描边
+			Name "Outline"
+
+			Cull Front
+
+			CGPROGRAM
+			
+			#pragma vertex vert
+			#pragma fragment frag
+			
+			#include "UnityCG.cginc"
+			
+			float _Outline;
+			fixed4 _OutlineColor;
+			
+			struct appdata {
+				float4 vertex : POSITION;
+				float3 normal : NORMAL;
+			}; 
+			
+			struct v2f {
+			    float4 pos : SV_POSITION;
+			};
+			
+			v2f vert (appdata v) {
+				v2f o;
+				
+				//沿着法线稍微外扩下模型
+				float4 objPos = v.vertex;
+				float4 normal = float4(v.normal.xy, -0.5f, 1);
+				objPos = objPos + normalize(normal) * _Outline;
+				o.pos = UnityObjectToClipPos(objPos);
+				
+				return o;
+			}
+			
+			float4 frag(v2f i) : SV_Target { 
+				return float4(_OutlineColor.rgb, 1);               
+			}
+			
+			ENDCG
+
 		}
 
 		UsePass "Legacy Shaders/VertexLit/SHADOWCASTER"
