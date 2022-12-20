@@ -1,4 +1,5 @@
-﻿Shader "Roystan/Toon"
+﻿
+Shader "Roystan/Toon"
 {
 	Properties
 	{
@@ -109,14 +110,103 @@
 			ENDCG
 		}
 
-		// Pass
-		// {
-		// 	Name "Other Lights"
-		// }
+		 Pass
+		 {
+			//这个pass处理其他光源
+		 	Name "Other Lights"
+
+			Tags
+			{
+				"LightMode" = "ForwardAdd"
+			}
+
+			//其他光源用来混合
+			Blend SrcAlpha One
+
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma multi_compile_fwdadd
+
+			#include "Lighting.cginc"
+			#include "AutoLight.cginc"
+
+			struct appdata {
+				float4 vertex : POSITION;
+				float3 normal : NORMAL;
+			};
+			
+			struct v2f {
+				float4 pos : SV_POSITION;
+				float3 worldNormal : TEXCOORD0;
+				float3 worldPos : TEXCOORD1;
+				SHADOW_COORDS(2)  
+			};
+
+			float4 _SpecularColor;
+			float _Glossiness;
+			
+			v2f vert(appdata v) {
+				v2f o;
+				o.pos = UnityObjectToClipPos(v.vertex);
+				
+				o.worldNormal = UnityObjectToWorldNormal(v.normal);
+				
+				o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+				TRANSFER_SHADOW(o); 
+				return o;
+			}
+			
+			float4 frag(v2f i) : SV_Target {
+				fixed3 worldNormal = normalize(i.worldNormal);
+				#ifdef USING_DIRECTIONAL_LIGHT
+					fixed3 worldLightDir = normalize(_WorldSpaceLightPos0.xyz);
+				#else
+					fixed3 worldLightDir = normalize(_WorldSpaceLightPos0.xyz - i.worldPos.xyz);
+				#endif
+				
+				//光照和阴影与主光源基本一致，暂时不考虑漫反射
+				// fixed3 diffuse = _LightColor0.rgb * _Diffuse.rgb * max(0, dot(worldNormal, worldLightDir));
+				
+				float3 normal = normalize(i.worldNormal);
+				float NdotL = dot(_WorldSpaceLightPos0, normal);
+
+				float shadow = SHADOW_ATTENUATION(i);
+				float lightIntensity = smoothstep(0, 0.01, NdotL * shadow);
+				float4 light = lightIntensity * _LightColor0;
+
+				float3 viewDir = normalize(_WorldSpaceCameraPos.xyz - i.worldPos.xyz);
+				float3 halfVector = normalize(viewDir + _WorldSpaceLightPos0);
+				float NdotH = dot(halfVector, normal);
+				float specularIntensity = pow(NdotH * lightIntensity, _Glossiness * _Glossiness);
+				float specularIntensitySmooth = smoothstep(0.005, 0.01, specularIntensity);
+				float4 specular = light * specularIntensitySmooth;
+
+				//处理下不同光源的衰减
+				#ifdef USING_DIRECTIONAL_LIGHT
+					fixed atten = 1.0;
+				#else
+					#if defined (POINT)
+				        float3 lightCoord = mul(unity_WorldToLight, float4(i.worldPos, 1)).xyz;
+				        fixed atten = tex2D(_LightTexture0, dot(lightCoord, lightCoord).rr).UNITY_ATTEN_CHANNEL;
+				    #elif defined (SPOT)
+				        float4 lightCoord = mul(unity_WorldToLight, float4(i.worldPos, 1));
+				        fixed atten = (lightCoord.z > 0) * tex2D(_LightTexture0, lightCoord.xy / lightCoord.w + 0.5).w * tex2D(_LightTextureB0, dot(lightCoord, lightCoord).rr).UNITY_ATTEN_CHANNEL;
+				    #else
+				        fixed atten = 1.0;
+				    #endif
+				#endif
+
+				return (light + specular) * atten;
+			}
+			
+			ENDCG
+
+		 }
 
 		Pass
 		{
-			//另一个pass剔除掉前面 用来渲染描边
+			//这个pass剔除掉前面 用来渲染描边
 			Name "Outline"
 
 			Cull Front
@@ -141,8 +231,8 @@
 			};
 			
 			v2f vert (appdata v) {
+
 				v2f o;
-				
 				//沿着法线稍微外扩下模型
 				float4 objPos = v.vertex;
 				float4 normal = float4(v.normal.xy, -0.5f, 1);
