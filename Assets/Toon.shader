@@ -234,11 +234,12 @@ Shader "Roystan/Toon"
 
 				v2f o;
 				//沿着法线稍微外扩下模型
-				float4 objPos = v.vertex;
-				float4 normal = float4(v.normal.xy, -0.5f, 1);
-				objPos = objPos + normalize(normal) * _Outline;
-				o.pos = UnityObjectToClipPos(objPos);
-				
+				float4 pos = UnityObjectToClipPos(v.vertex);
+				float3 normal = float3(v.normal.xyz);
+				float3 viewNormal = mul((float3x3)UNITY_MATRIX_IT_MV, normalize(normal));
+				float3 ndcNormal = mul((float3x3)UNITY_MATRIX_P, normalize(viewNormal)) * pos.w;
+				pos.xy += 0.1 * normalize(ndcNormal).xy * _Outline;
+				o.pos = pos;
 				return o;
 			}
 			
