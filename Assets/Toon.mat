@@ -65,14 +65,14 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
-    - _Glossiness: 32
+    - _Glossiness: 3.6
     - _GlossyReflections: 1
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
-    - _Outline: 0.01
+    - _Outline: 0.15
     - _Parallax: 0.02
-    - _RimAmount: 0.716
+    - _RimAmount: 0.66
     - _RimThreshold: 0.256
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -85,5 +85,5 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}
-    - _SpecularColor: {r: 0.9, g: 0.9, b: 0.9, a: 1}
+    - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
