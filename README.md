@@ -1,14 +1,17 @@
 # Toon Shader for Unity
+## Unity Version
+Unity 2020.3.32f1
+## Note
 This is based on [Toon Shader tutorial](https://roystan.net/articles/toon-shader.html) from the site [roystan.net](https://roystan.net/).
 
 ![alt text](https://i.imgur.com/0PbpWYg.png)
 
 Has specular, rim lighting, and can cast and receive shadows.
 
-## Differences with base project
+## Differences with base tutorial project
 
-* Add Forward-Addtional Lights.
-* Add Ndc-based Outline.
+* Added Forward-Addtional Lights.
+* Added Ndc-Based Outline.
 ![image](https://user-images.githubusercontent.com/25216715/209772374-4968c608-779a-4fb8-8cbb-68d0c19d00a0.png)
 
 
